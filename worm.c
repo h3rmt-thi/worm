@@ -60,53 +60,57 @@ int main(void) {
     int min_rows = 3;
 
     // Here we start
-    @01                             // Init various settings of our application
+    initializeCursesApplication();                            // Init various settings of our application
 
-    msg_len = @02                   // Compute length of our template
+    msg_len = strlen(message_template);                   // Compute length of our template
 
     // Maximal LINES and COLS are set by curses for the current window size.
     // Check if the window is large enough to display our message
-    if ( LINES < @03       || COLS < @03     ) {
+    if ( LINES < min_rows       || COLS < msg_len     ) {
         // Cleanup special curses settings and restore the normal terminal functionality
-        @04
+        cleanupCursesApp();
         // Print a conventional error message via printf.
         // Note: this only work after the call to  cleanupCursesApp();
-        printf("Das Fenster ist zu klein: wir brauchen mindestens %dx%d\n", @05, @05 );
+        printf("Das Fenster ist zu klein: wir brauchen mindestens %dx%d\n", msg_len, min_rows);
 
         // Set the result code to report the error
         res_code = RES_FAILED;
     } else {
         // Center output
-        int mid_row = @06
-        int start_col = @06
+        int mid_row = LINES >> 1;
+        int start_col = (COLS >> 1) - (msg_len >> 1);
 
         // Write letter A to the top    left  corner of our display
-        @07          // Move to position
-        @07          // Put character there
+        move(0, 0);          // Move to position
+        addch('A');          // Put character there
 
         // Write letter B to the top    right corner of our display
         // Use combination of move() and addch() functions
-        @08
+        move(0, COLS-1);
+        addch('B');
         // Write letter C to the bottom right corner of our display
-        @09
+        move(LINES-1, COLS-1);
+        addch('C');
         // Write letter D to the bottom left  corner of our display
-        @10
+        move(LINES-1, 0);
+        addch('D');
  
         // Write our message centered onto the display
-        mvprintw(mid_row, start_col,"Das Fenster hat %3d Zeilen und %3d Spalten", @11, @11);
+        mvprintw(mid_row, start_col, "Das Fenster hat %3d Zeilen und %3d Spalten", LINES, COLS);
+        // mvprintw(0, 0, "%d %d %d %d %d", LINES, COLS >> 1, msg_len >> 1, mid_row, start_col);
 
         // Refresh the screen in order to show all changes on the screen
-        @12
+        refresh();
         
         // Wait for user to press a key
-        @13                   // make getch to be a blocking call
+        nodelay(stdscr, FALSE);                   // make getch to be a blocking call
         getch();
 
         // Set the result code to report success
         res_code = RES_OK;
-
+        
         // Cleanup special curses settings and restore the normal terminal functionality
-        @14
+        cleanupCursesApp();
     }
     return res_code;
 }
