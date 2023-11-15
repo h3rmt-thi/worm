@@ -102,7 +102,7 @@ void setWormHeading(int dir);
 void initializeColors() {
     // Define colors of the game
     start_color();
-    init_pair(COLP_USER_WORM,     @002,    COLOR_BLACK);
+    init_pair(COLP_USER_WORM,    COLOR_GREEN ,    COLOR_BLACK);
 }
 
 void readUserInput(int* agame_state ) {
@@ -119,19 +119,19 @@ void readUserInput(int* agame_state ) {
                 setWormHeading(WORM_UP);
                 break;
             case KEY_DOWN :// User wants down
-                @012
+                setWormHeading(WORM_DOWN);
                 break;
             case KEY_LEFT :// User wants left
-                @012
+                setWormHeading(WORM_LEFT);
                 break;
             case KEY_RIGHT :// User wants right
-                @012
+                setWormHeading(WORM_RIGHT);
                 break;
             case 's' : // User wants single step
-                @013  // We simply make getch blocking
+            	nodelay(stdscr, FALSE);
                 break;
             case ' ' : // Terminate single step; make getch non-blocking again
-                @013   // Make getch non-blocking again
+            	nodelay(stdscr, TRUE);
                 break;
         }
     }
@@ -171,16 +171,16 @@ int doLevel() {
         // Process optional user input
         readUserInput(&game_state); 
         if ( game_state == WORM_GAME_QUIT ) {
-            end_level_loop = @014;
+            end_level_loop = TRUE;
             continue; // Go to beginning of the loop's block and check loop condition
         }
 
         // Process userworm
         // Now move the worm for one step
-        moveWorm(@015);
+        moveWorm(&game_state);
         // Bail out of the loop if something bad happened
         if ( game_state != WORM_GAME_ONGOING ) {
-            end_level_loop = @016;
+            end_level_loop = TRUE;
             continue; // Go to beginning of the loop's block and check loop condition
         }
         // Show the worm at its new position
@@ -204,7 +204,7 @@ int doLevel() {
     // There is no user feedback at the moment!
 
     // Normal exit point
-    return @017;
+    return res_code;
 }
 
 // *********************************************
@@ -248,7 +248,7 @@ void placeItem(int y, int x, chtype symbol, int color_pair) {
     //  Store item on the display (symbol code)
     move(y, x);                         // Move cursor to (y,x)
     attron(COLOR_PAIR(color_pair));     // Start writing in selected color
-    addch(@006);                      // Store symbol on the virtual display
+    addch(symbol);                      // Store symbol on the virtual display
     attroff(COLOR_PAIR(color_pair));    // Stop writing in selected color
 }
 
@@ -256,12 +256,12 @@ void placeItem(int y, int x, chtype symbol, int color_pair) {
 
 // Get the last usable row on the display
 int getLastRow() {
-    return @003;
+    return LINES - 1;
 }
 
 // Get the last usable column on the display
 int getLastCol() {
-    @004
+    return COLS - 1;
 }
 
 // *****************************************************
@@ -275,10 +275,10 @@ int getLastCol() {
 int initializeWorm(int headpos_y, int headpos_x, int dir, int color) {
     // Initialize position of worms head
     theworm_headpos_y = headpos_y;
-    theworm_headpos_x = @008;
+    theworm_headpos_x = headpos_x;
 
     // Initialize the heading of the worm
-    @009
+    setWormHeading(dir);
 
     // Initialze color of the worm
     theworm_wcolor = color;
@@ -291,16 +291,13 @@ int initializeWorm(int headpos_y, int headpos_x, int dir, int color) {
 void showWorm() {
     // Due to our encoding we just need to show the head element
     // All other elements are already displayed
-    placeItem(
-            theworm_headpos_y ,
-            @007,
-            SYMBOL_WORM_INNER_ELEMENT,theworm_wcolor);
+    placeItem(theworm_headpos_y, theworm_headpos_x, SYMBOL_WORM_INNER_ELEMENT, theworm_wcolor);
 }
 
 void moveWorm(int* agame_state) {
     // Compute and store new head position according to current heading.
     theworm_headpos_y += theworm_dy;
-    theworm_headpos_x += @010;
+    theworm_headpos_x += theworm_dx;
 
     // Check if we would leave the display if we move the worm's head according
     // to worm's last direction.
@@ -308,11 +305,11 @@ void moveWorm(int* agame_state) {
     if (theworm_headpos_x < 0) {
         *agame_state = WORM_OUT_OF_BOUNDS;
     } else if (theworm_headpos_x > getLastCol() ) { 
-        *agame_state = @011
+        *agame_state = WORM_OUT_OF_BOUNDS;
     } else if (theworm_headpos_y < 0) {  
-        @011
+        *agame_state = WORM_OUT_OF_BOUNDS;
 	} else if (theworm_headpos_y > getLastRow() ) {
-        @011
+        *agame_state = WORM_OUT_OF_BOUNDS;
     } else {
         // We will stay within bounds.
         // So all is well
@@ -328,16 +325,16 @@ void setWormHeading(int dir) {
             theworm_dy=-1;
             break;
         case WORM_DOWN :// User wants down
-            @005;
-            @005;
+            theworm_dx=0;
+            theworm_dy=1;
             break;
-        case @005      :// User wants left
-            @005
-            @005
+        case WORM_LEFT:// User wants left
+            theworm_dx=-1;
+            theworm_dy=0;
             break;
-        case @005      :// User wants right
-            @005
-            @005
+        case WORM_RIGHT:// User wants right
+            theworm_dx=1;
+            theworm_dy=0;
             break;
     }
 } 
@@ -374,5 +371,5 @@ int main(void) {
         cleanupCursesApp();
     }
 
-    return @001;
+    return res_code;
 }
