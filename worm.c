@@ -384,7 +384,7 @@ void moveWorm(enum GameStates *agame_state) {
     int headpos_y = theworm_wormpos_y[theworm_headindex] + theworm_dy;
 
     attron(COLOR_PAIR(COLP_FREE_CELL));
-    mvprintw(getLastRow(), 40, "             ", headpos_y, headpos_x, theworm_headindex);
+    mvprintw(getLastRow(), 40, "             ");
     attroff(COLOR_PAIR(COLP_FREE_CELL));
     attron(COLOR_PAIR(COLP_DATA));
     mvprintw(getLastRow(), 40, "%dx%d %d", headpos_y, headpos_x, theworm_headindex);
