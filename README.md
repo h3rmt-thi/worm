@@ -1,16 +1,18 @@
 New in this version
 
-- Introduction of a worm that can be moved around on the display by the user
-  The worm is endless and may cross itsself.
-  However, the worm is not allowed to leave the display
+Separated compilation of source code:
 
-New in this version
-Enhanced data types
-- use enum
-- use bool
+- We split our single program file into multiple
+  C-files and corresponding header files
 
-New in this version
-- Introduction of (separated) data structures for the worm.
-We store length of the worm and its element positions on the screen.
-- The worm has a visible end. We cleanup behind the worm.
-- We detect self-collisions of the worm
+- We separate declaration and corresponding code according to responsibilities:
+
+    - prep.*: Basic preparation of the application (curses)
+    - worm_model.*: Worm data structures and manipulation functions
+    - board_model.*:Put Items onto the game board
+                    Check dimensions of game board
+                    Better motivation later when we store cell occupation, too.
+
+    - worm.*: Main code of the game
+
+- More complex Makefile
