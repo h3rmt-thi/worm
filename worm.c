@@ -11,11 +11,11 @@
 #include "worm_model.h"
 #include "board_model.h"
 
-void initializeColors();
+// void initializeColors();
 
-void readUserInput(enum GameStates *agame_state);
+// void readUserInput(enum GameStates *agame_state);
 
-enum ResCodes doLevel();
+// enum ResCodes doLevel();
 
 
 // Initialize colors of the game
