@@ -13,9 +13,11 @@ enum ColorPairs {
 };
 
 // Dimensions and bounds
-#define NAP_TIME    100   // Time in milliseconds to sleep between updates of display
-#define MIN_NUMBER_OF_ROWS  3   // The guaranteed number of rows available for the board
-#define MIN_NUMBER_OF_COLS 10   // The guaranteed number of columns available for the board
+#define NAP_TIME 100 // Time in milliseconds to sleep between updates of display
+#define MIN_NUMBER_OF_ROWS                                                     \
+    3 // The guaranteed number of rows available for the board
+#define MIN_NUMBER_OF_COLS                                                     \
+    10 // The guaranteed number of columns available for the board
 #define WORM_LENGTH 30 // Maximal length of the worm
 
 // Numbers for color pairs used by curses macro COLOR_PAIR
@@ -36,4 +38,4 @@ enum GameStates {
     WORM_GAME_QUIT,
 };
 
-#endif  // #define _WORM_H
+#endif // #define _WORM_H

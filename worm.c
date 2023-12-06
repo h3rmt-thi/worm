@@ -1,22 +1,21 @@
 #include <curses.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdbool.h>
-#include <time.h>
 #include <string.h>
+#include <time.h>
 #include <unistd.h>
 
+#include "board_model.h"
 #include "prep.h"
 #include "worm.h"
 #include "worm_model.h"
-#include "board_model.h"
 
 // void initializeColors();
 
 // void readUserInput(enum GameStates *agame_state);
 
 // enum ResCodes doLevel();
-
 
 // Initialize colors of the game
 void initializeColors() {
@@ -34,27 +33,27 @@ void readUserInput(enum GameStates *agame_state) {
         // Is there some user input?
         // Blocking or non-blocking depends of config of getch
         switch (ch) {
-            case 'q' :    // User wants to end the show
-                *agame_state = WORM_GAME_QUIT;
-                break;
-            case KEY_UP :// User wants up
-                setWormHeading(WORM_UP);
-                break;
-            case KEY_DOWN :// User wants down
-                setWormHeading(WORM_DOWN);
-                break;
-            case KEY_LEFT :// User wants left
-                setWormHeading(WORM_LEFT);
-                break;
-            case KEY_RIGHT :// User wants right
-                setWormHeading(WORM_RIGHT);
-                break;
-            case 's' : // User wants single step
-                nodelay(stdscr, FALSE);
-                break;
-            case ' ' : // Terminate single step; make getch non-blocking again
-                nodelay(stdscr, TRUE);
-                break;
+        case 'q': // User wants to end the show
+            *agame_state = WORM_GAME_QUIT;
+            break;
+        case KEY_UP: // User wants up
+            setWormHeading(WORM_UP);
+            break;
+        case KEY_DOWN: // User wants down
+            setWormHeading(WORM_DOWN);
+            break;
+        case KEY_LEFT: // User wants left
+            setWormHeading(WORM_LEFT);
+            break;
+        case KEY_RIGHT: // User wants right
+            setWormHeading(WORM_RIGHT);
+            break;
+        case 's': // User wants single step
+            nodelay(stdscr, FALSE);
+            break;
+        case ' ': // Terminate single step; make getch non-blocking again
+            nodelay(stdscr, TRUE);
+            break;
         }
     }
     return;
@@ -66,7 +65,7 @@ enum ResCodes doLevel() {
     enum ResCodes res_code; // Result code from functions
     bool end_level_loop;    // Indicates whether we should leave the main loop
 
-    int bottomLeft_y, bottomLeft_x;   // Start positions of the worm
+    int bottomLeft_y, bottomLeft_x; // Start positions of the worm
 
     // At the beginnung of the level, we still have a chance to win
     game_state = WORM_GAME_ONGOING;
@@ -76,7 +75,8 @@ enum ResCodes doLevel() {
     bottomLeft_y = getLastRow();
     bottomLeft_x = 0;
 
-    res_code = initializeWorm(bottomLeft_y, bottomLeft_x, WORM_RIGHT, COLP_USER_WORM, WORM_LENGTH);
+    res_code = initializeWorm(bottomLeft_y, bottomLeft_x, WORM_RIGHT,
+                              COLP_USER_WORM, WORM_LENGTH);
     if (res_code != RES_OK) {
         return res_code;
     }
@@ -94,7 +94,8 @@ enum ResCodes doLevel() {
         readUserInput(&game_state);
         if (game_state == WORM_GAME_QUIT) {
             end_level_loop = true;
-            continue; // Go to beginning of the loop's block and check loop condition
+            continue; // Go to beginning of the loop's block and check loop
+                      // condition
         }
 
         // Process userworm
@@ -108,12 +109,15 @@ enum ResCodes doLevel() {
 
         // Bail out of the loop if something bad happened
         if (game_state != WORM_GAME_ONGOING) {
-            // placeItem(theworm_wormpos_y[theworm_headindex], theworm_wormpos_x[theworm_headindex], SYMBOL_WORM_INNER_ELEMENT, COLP_DATA);
-			showWorm(true);
-        	refresh();
+            // placeItem(theworm_wormpos_y[theworm_headindex],
+            // theworm_wormpos_x[theworm_headindex], SYMBOL_WORM_INNER_ELEMENT,
+            // COLP_DATA);
+            showWorm(true);
+            refresh();
             end_level_loop = true;
             napms(NAP_TIME * 10);
-            continue; // Go to beginning of the loop's block and check loop condition
+            continue; // Go to beginning of the loop's block and check loop
+                      // condition
         }
 
         // Sleep a bit before we show the updated window
@@ -137,17 +141,17 @@ enum ResCodes doLevel() {
 }
 
 int main(void) {
-    int res_code;         // Result code from functions
+    int res_code; // Result code from functions
 
     // Here we start
-    initializeCursesApplication();  // Init various settings of our application
-    initializeColors();             // Init colors used in the game
+    initializeCursesApplication(); // Init various settings of our application
+    initializeColors();            // Init colors used in the game
 
     // Maximal LINES and COLS are set by curses for the current window size.
     // Note: we do not cope with resizing in this simple examples!
 
-    // Check if the window is large enough to display messages in the message area
-    // a has space for at least one line for the worm
+    // Check if the window is large enough to display messages in the message
+    // area a has space for at least one line for the worm
     if (LINES < MIN_NUMBER_OF_ROWS || COLS < MIN_NUMBER_OF_COLS) {
         // Since we not even have the space for displaying messages
         // we print a conventional error message via printf after

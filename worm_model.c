@@ -1,8 +1,8 @@
 #include "worm_model.h"
 
-#include <curses.h>
-#include "worm.h"
 #include "board_model.h"
+#include "worm.h"
+#include <curses.h>
 
 // Data defining the worm
 // The current heading of the worm
@@ -23,11 +23,11 @@ int theworm_maxindex;
 // 0 <= theworm_headindex <= theworm_maxindex
 int theworm_headindex;
 
-
 // The following functions all depend on the model of the worm
 
 // Initialize the worms
-enum ResCodes initializeWorm(int headpos_y, int headpos_x, enum WormHeading dir, enum ColorPairs color, int len_max) {
+enum ResCodes initializeWorm(int headpos_y, int headpos_x, enum WormHeading dir,
+                             enum ColorPairs color, int len_max) {
     // Initialize position of worms head
     // theworm_headpos_y = headpos_y;
     // theworm_headpos_x = headpos_x;
@@ -56,10 +56,14 @@ enum ResCodes initializeWorm(int headpos_y, int headpos_x, enum WormHeading dir,
 void showWorm(bool dead) {
     // Due to our encoding we just need to show the head element
     // All other elements are already displayed
-    if (dead) 
-        placeItem(theworm_wormpos_y[theworm_headindex], theworm_wormpos_x[theworm_headindex], SYMBOL_WORM_INNER_ELEMENT, COLP_DATA);
+    if (dead)
+        placeItem(theworm_wormpos_y[theworm_headindex],
+                  theworm_wormpos_x[theworm_headindex],
+                  SYMBOL_WORM_INNER_ELEMENT, COLP_DATA);
     else
-    	placeItem(theworm_wormpos_y[theworm_headindex], theworm_wormpos_x[theworm_headindex], SYMBOL_WORM_INNER_ELEMENT, COLP_USER_WORM);
+        placeItem(theworm_wormpos_y[theworm_headindex],
+                  theworm_wormpos_x[theworm_headindex],
+                  SYMBOL_WORM_INNER_ELEMENT, COLP_USER_WORM);
 }
 
 void cleanWormTail() {
@@ -71,7 +75,8 @@ void cleanWormTail() {
     // or theworm_wormpos_x is enough.
     if (theworm_wormpos_y[tailindex] != UNUSED_POS_ELEM) {
         // YES: place a SYMBOL_FREE_CELL at the tail's position
-        placeItem(theworm_wormpos_y[tailindex], theworm_wormpos_x[tailindex], SYMBOL_FREE_CELL, COLP_FREE_CELL);
+        placeItem(theworm_wormpos_y[tailindex], theworm_wormpos_x[tailindex],
+                  SYMBOL_FREE_CELL, COLP_FREE_CELL);
     }
 }
 
@@ -87,7 +92,8 @@ void moveWorm(enum GameStates *agame_state) {
     mvprintw(getLastRow(), 40, "         ");
     attroff(COLOR_PAIR(COLP_FREE_CELL));
     attron(COLOR_PAIR(COLP_DATA));
-    mvprintw(getLastRow(), 40, "%dx%d %d", headpos_y, headpos_x, theworm_headindex);
+    mvprintw(getLastRow(), 40, "%dx%d %d", headpos_y, headpos_x,
+             theworm_headindex);
     attroff(COLOR_PAIR(COLP_DATA));
 
     // Check if we would leave the display if we move the worm's head according
@@ -126,20 +132,22 @@ void moveWorm(enum GameStates *agame_state) {
 bool isInUseByWorm(int new_headpos_y, int new_headpos_x) {
     // bool collision = false;
 
-    for (int i = 0;i <= theworm_maxindex; i++) {
-    	// if theworm_wormpos_x[i] == UNUSED_POS_ELEM theworm_wormpos_y[i] == UNUSED_POS_ELEM is also true
+    for (int i = 0; i <= theworm_maxindex; i++) {
+        // if theworm_wormpos_x[i] == UNUSED_POS_ELEM theworm_wormpos_y[i] ==
+        // UNUSED_POS_ELEM is also true
         if (theworm_wormpos_x[i] == UNUSED_POS_ELEM) {
-        	// break;
+            // break;
             return false;
         }
-        
-        if (theworm_wormpos_x[i] == new_headpos_x && theworm_wormpos_y[i] == new_headpos_y) {
+
+        if (theworm_wormpos_x[i] == new_headpos_x &&
+            theworm_wormpos_y[i] == new_headpos_y) {
             // collision = true;
             // break;
             return true;
         }
     }
-    
+
     // Return what we found out.
     // return collision;
     return false;
@@ -148,21 +156,21 @@ bool isInUseByWorm(int new_headpos_y, int new_headpos_x) {
 // Setters
 void setWormHeading(enum WormHeading dir) {
     switch (dir) {
-        case WORM_UP :// User wants up
-            theworm_dx = 0;
-            theworm_dy = -1;
-            break;
-        case WORM_DOWN :// User wants down
-            theworm_dx = 0;
-            theworm_dy = 1;
-            break;
-        case WORM_LEFT:// User wants left
-            theworm_dx = -1;
-            theworm_dy = 0;
-            break;
-        case WORM_RIGHT:// User wants right
-            theworm_dx = 1;
-            theworm_dy = 0;
-            break;
+    case WORM_UP: // User wants up
+        theworm_dx = 0;
+        theworm_dy = -1;
+        break;
+    case WORM_DOWN: // User wants down
+        theworm_dx = 0;
+        theworm_dy = 1;
+        break;
+    case WORM_LEFT: // User wants left
+        theworm_dx = -1;
+        theworm_dy = 0;
+        break;
+    case WORM_RIGHT: // User wants right
+        theworm_dx = 1;
+        theworm_dy = 0;
+        break;
     }
 }
