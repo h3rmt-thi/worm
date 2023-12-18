@@ -19,9 +19,11 @@ void initializeColors() {
     // Define colors of the game
     start_color();
     init_pair(COLP_FREE_CELL, COLOR_BLACK, COLOR_BLACK);
-    init_pair(COLP_DATA, COLOR_RED, COLOR_BLACK);
-    init_pair(COLP_BARRIER, COLOR_RED, COLOR_CYAN);
+    init_pair(COLP_BARRIER, COLOR_RED, COLOR_BLACK);
     init_pair(COLP_USER_WORM, COLOR_GREEN, COLOR_BLACK);
+    init_pair(COLP_FOOD_1, COLOR_MAGENTA, COLOR_BLACK);
+    init_pair(COLP_FOOD_2, COLOR_CYAN, COLOR_BLACK);
+    init_pair(COLP_FOOD_3, COLOR_YELLOW, COLOR_BLACK);
 }
 
 void readUserInput(struct Worm *worm, enum GameStates *agame_state) {
@@ -29,7 +31,7 @@ void readUserInput(struct Worm *worm, enum GameStates *agame_state) {
 
     if ((ch = getch()) > 0) {
         // Is there some user input?
-        // Blocking or non-blocking depends of config of getch
+        // Blocking or non-blocking depends on config of getch
         switch (ch) {
         case 'q': // User wants to end the show
             *agame_state = WORM_GAME_QUIT;
@@ -52,6 +54,9 @@ void readUserInput(struct Worm *worm, enum GameStates *agame_state) {
         case ' ': // Terminate single step; make getch non-blocking again
             nodelay(stdscr, TRUE);
             break;
+        case 'g': // For development: let the worm grow by BONUS_3 elements
+            growWorm(worm, BONUS_3);
+            break;
         default:;
         }
     }
@@ -59,20 +64,29 @@ void readUserInput(struct Worm *worm, enum GameStates *agame_state) {
 
 enum ResCodes doLevel() {
     struct Worm userworm;
+    struct Board board;
     enum GameStates game_state = WORM_GAME_ONGOING; // The current game_state
 
     // There is always an initialized user worm.
     // Initialize the userworm with its size, position, heading.
-    const struct Pos start = {getLastRow(), 0};
 
-    enum ResCodes res_code = initializeWorm(&userworm, start, WORM_RIGHT,
-                                            COLP_USER_WORM, WORM_LENGTH);
+    enum ResCodes res_code = initializeBoard(&board);
+    if (res_code != RES_OK) {
+        return res_code;
+    }
+    res_code = initializeLevel(&board);
     if (res_code != RES_OK) {
         return res_code;
     }
 
-    showBorderLine();
-    showWorm(&userworm, false);
+    const struct Pos start = {getLastRowOnBoard(&board), 0};
+    res_code = initializeWorm(&userworm, start, WORM_RIGHT, COLP_USER_WORM,
+                              WORM_LENGTH, WORM_INITIAL_LENGTH);
+    if (res_code != RES_OK) {
+        return res_code;
+    }
+
+    showWorm(&board, &userworm);
 
     // Display all what we have set up until now
     refresh();
@@ -89,41 +103,52 @@ enum ResCodes doLevel() {
 
         // Process userworm
         // Clean the tail of the worm
-        cleanWormTail(&userworm);
+        cleanWormTail(&board, &userworm);
         // Now move the worm for one step
-        moveWorm(&userworm, &game_state);
+        moveWorm(&board, &userworm, &game_state);
         // Show the worm at its new position
-        showWorm(&userworm, false);
-        // END process userworm
+        showWorm(&board, &userworm);
+
+        showStatus(&board, &userworm);
+
+        refresh();
+
+        if (getNumberOfFoodItems(&board) == 0) {
+            end_level_loop = true;
+        }
 
         // Bail out of the loop if something bad happened
         if (game_state != WORM_GAME_ONGOING) {
             end_level_loop = true;
-            // placeItem(theworm_wormpos_y[theworm_headindex],
-            // theworm_wormpos_x[theworm_headindex], SYMBOL_WORM_INNER_ELEMENT,
-            // COLP_DATA);
-            showWorm(&userworm, true);
-            refresh();
-            napms(NAP_TIME * 10);
             continue;
         }
 
         // Sleep a bit before we show the updated window
         napms(NAP_TIME);
-
-        // Display all the updates
-        refresh();
-
-        // Start next iteration
     }
 
     // Preset res_code for rest of the function
     res_code = RES_OK;
 
     switch (game_state) {
+    case WORM_GAME_ONGOING:
+        if (getNumberOfFoodItems(&board) == 0) {
+            showDialog("Sie habe diese Runde erfolgreich beendet !!!",
+                       "Bitte Taste druecken");
+        } else {
+            showDialog("Interner Fehler!", "Bitte Taste druecken");
+            // Correct result code
+            res_code = RES_INTERNAL_ERROR;
+        }
+        break;
     case WORM_GAME_QUIT:
         // User must have typed 'q' for quit
         showDialog("Sie haben die aktuelle Runde abgebrochen!",
+                   "Bitte Taste druecken");
+        break;
+    case WORM_CRASH:
+        showDialog("Sie haben das Spiel verloren, weil sie in die Barriere "
+                   "gefahren sind",
                    "Bitte Taste druecken");
         break;
     case WORM_OUT_OF_BOUNDS:
@@ -142,10 +167,6 @@ enum ResCodes doLevel() {
         res_code = RES_INTERNAL_ERROR;
     }
 
-    // For some reason we left the control loop of the current level.
-    // However, in this version we do not yet check for the reason.
-    // There is no user feedback at the moment!
-
     // Normal exit point
     return res_code;
 }
@@ -162,7 +183,8 @@ int main(void) {
 
     // Check if the window is large enough to display messages in the message
     // area a has space for at least one line for the worm
-    if (LINES < MA_ROWS_RESERVED + MIN_NUMBER_OF_ROWS || COLS < MIN_NUMBER_OF_COLS) {
+    if (LINES < MA_ROWS_RESERVED + MIN_NUMBER_OF_ROWS ||
+        COLS < MIN_NUMBER_OF_COLS) {
         // Since we not even have the space for displaying messages
         // we print a conventional error message via printf after
         // the call of cleanupCursesApp()

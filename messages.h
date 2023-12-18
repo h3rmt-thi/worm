@@ -1,11 +1,10 @@
-#ifndef _MESSAGES_H
-#define _MESSAGES_H
+#ifndef MESSAGES_H
+#define MESSAGES_H
 
 #include "worm_model.h"
 
 void clearLineInMessageArea(int row);
-void showBorderLine();
-void showStatus(const struct Worm *);
+void showStatus(struct Board *board, struct Worm *worm);
 int showDialog(char *prompt1, char *prompt2);
 
-#endif // #define _MESSAGES_H
+#endif // #define MESSAGES_H

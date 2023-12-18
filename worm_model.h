@@ -13,8 +13,16 @@ enum WormHeading {
     WORM_RIGHT,
 };
 
+// Boni for eating food
+enum Boni {
+    BONUS_1 = 2, // additional length for worm when consuming food of type 1
+    BONUS_2 = 4, // additional length for worm when consuming food of type 2
+    BONUS_3 = 6, // additional length for worm when consuming food of type 3
+};
+
 // A worm structure
 struct Worm {
+    int cur_lastindex;
     int maxindex;
     // Last usable index into the array pointed to by wormpos
     int headindex; // An index into the array for the worm's head position
@@ -30,13 +38,14 @@ struct Worm {
 };
 
 enum ResCodes initializeWorm(struct Worm *, struct Pos head,
-                                    enum WormHeading dir, enum ColorPairs color,
-                                    int len_max);
-void showWorm(const struct Worm *, bool dead);
-void moveWorm(struct Worm *, enum GameStates *);
-bool isInUseByWorm(const struct Worm *, struct Pos new_head);
+                             enum WormHeading dir, enum ColorPairs color,
+                             int len_max, int len_cur);
+void growWorm(struct Worm *, enum Boni growth);
+void showWorm(struct Board *, const struct Worm *);
+void moveWorm(struct Board *, struct Worm *, enum GameStates *);
 void setWormHeading(struct Worm *, enum WormHeading dir);
-void cleanWormTail(const struct Worm *);
+void cleanWormTail(struct Board *, const struct Worm *);
 struct Pos getWormHeadPos(const struct Worm *);
+int getWormLength(const struct Worm *);
 
 #endif // #define _WORM_MODEL_H

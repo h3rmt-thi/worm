@@ -1,9 +1,11 @@
 #include "prep.h"
 
 #include <curses.h>
+#include <locale.h>
 
 // Initialize application with respect to curses settings
 void initializeCursesApplication() {
+    setlocale(LC_ALL, "");
     initscr(); // Initialize the curses screen
 
     // Note:
