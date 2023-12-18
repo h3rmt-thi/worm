@@ -1,8 +1,7 @@
-#include "messages.h"
-
 #include <curses.h>
 
 #include "board_model.h"
+#include "messages.h"
 #include "worm.h"
 #include "worm_model.h"
 
@@ -14,24 +13,18 @@ void clearLineInMessageArea(const int row) {
     }
 }
 
-// Display the board line in order to separate the message area
-void showBorderLine() {
-    const int pos_line0 = LINES - MA_ROWS_RESERVED;
-    for (int i = 0; i < COLS; i++) {
-        move(pos_line0, i);
-        attron(COLOR_PAIR(COLP_BARRIER));
-        addch(SYMBOL_BARRIER);
-        attroff(COLOR_PAIR(COLP_BARRIER));
-    }
-}
-
 // Display status about the game in the message area
-void showStatus(const struct Worm *worm) {
-    const int pos_line2 = LINES - MA_ROWS_RESERVED + 2;
+void showStatus(struct Board *board, struct Worm *worm) {
+    int pos_line1 = LINES - MA_ROWS_RESERVED + 1;
+    int pos_line2 = LINES - MA_ROWS_RESERVED + 2;
+    int pos_line3 = LINES - MA_ROWS_RESERVED + 3;
 
-    const struct Pos headpos = getWormHeadPos(worm);
+    struct Pos headpos = getWormHeadPos(worm);
+    mvprintw(pos_line1, 1, "Anzahl verbleibender Futterbrocken: %2d ",
+             getNumberOfFoodItems(board));
     mvprintw(pos_line2, 1, "Wurm ist an Position: y=%3d x=%3d", headpos.y,
              headpos.x);
+    mvprintw(pos_line3, 1, "Laenge des Wurms: %3d", getWormLength(worm));
 }
 
 // Display a dialog in the message area and wait for confirmation

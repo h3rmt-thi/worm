@@ -2,13 +2,14 @@
 
 #include "board_model.h"
 #include "worm.h"
-#include <curses.h>
 
 // Initialize the worms
 enum ResCodes initializeWorm(struct Worm *worm, const struct Pos head,
                              const enum WormHeading dir,
-                             const enum ColorPairs color, const int len_max) {
+                             const enum ColorPairs color, const int len_max,
+                             const int len_cur) {
     worm->maxindex = len_max - 1;
+    worm->cur_lastindex = len_cur - 1;
     worm->headindex = 0;
 
     for (int i = 0; i < worm->maxindex; i++) {
@@ -29,96 +30,102 @@ enum ResCodes initializeWorm(struct Worm *worm, const struct Pos head,
 
 // Show the worms's elements on the display
 // Simple version
-void showWorm(const struct Worm *worm, const bool dead) {
-    // Due to our encoding we just need to show the head element
-    // All other elements are already displayed
-    if (dead)
-        placeItem(worm->wormpos[worm->headindex], SYMBOL_WORM_INNER_ELEMENT,
-                  COLP_DATA);
-    else
-        placeItem(worm->wormpos[worm->headindex], SYMBOL_WORM_INNER_ELEMENT,
-                  COLP_USER_WORM);
+void showWorm(struct Board *board, const struct Worm *worm) {
+    int head = worm->headindex;
+    int tail = (worm->headindex + 1) % (worm->cur_lastindex + 1);
+    int i = worm->headindex;
+    do {
+        if (i == head)
+            placeItem(board, worm->wormpos[i].y, worm->wormpos[i].x,
+                      BC_USED_BY_WORM, SYMBOL_WORM_HEAD_ELEMENT, worm->wcolor);
+        else if (i == tail)
+            placeItem(board, worm->wormpos[i].y, worm->wormpos[i].x,
+                      BC_USED_BY_WORM, SYMBOL_WORM_TAIL_ELEMENT, worm->wcolor);
+        else
+            placeItem(board, worm->wormpos[i].y, worm->wormpos[i].x,
+                      BC_USED_BY_WORM, SYMBOL_WORM_INNER_ELEMENT, worm->wcolor);
+
+        i = (i + worm->cur_lastindex) % (worm->cur_lastindex + 1);
+    } while (i != worm->headindex && worm->wormpos[i].y != UNUSED_POS_ELEM);
 }
 
-void cleanWormTail(const struct Worm *worm) {
+int getWormLength(const struct Worm *worm) { return worm->cur_lastindex + 1; }
+
+void cleanWormTail(struct Board *board, const struct Worm *worm) {
     // Compute tailindex
-    const int tailindex = (worm->headindex + 1) % worm->maxindex;
+    const int tailindex = (worm->headindex + 1) % (worm->cur_lastindex + 1);
     // Check the array of worm elements.
     // Is the array element at tailindex already in use?
     // Checking either array theworm_wormpos_y
     // or theworm_wormpos_x is enough.
     if (worm->wormpos[tailindex].x != UNUSED_POS_ELEM) {
         // YES: place a SYMBOL_FREE_CELL at the tail's position
-        placeItem(worm->wormpos[tailindex], SYMBOL_FREE_CELL, COLP_FREE_CELL);
+        placeItem(board, worm->wormpos[tailindex].y, worm->wormpos[tailindex].x,
+                  BC_FREE_CELL, SYMBOL_FREE_CELL, COLP_FREE_CELL);
     }
 }
 
-void moveWorm(struct Worm *worm, enum GameStates *game_state) {
+void moveWorm(struct Board *board, struct Worm *worm,
+              enum GameStates *game_state) {
     const struct Pos new_head = {worm->wormpos[worm->headindex].y + worm->dy,
                                  worm->wormpos[worm->headindex].x + worm->dx};
-
-    attron(COLOR_PAIR(COLP_FREE_CELL));
-    mvprintw(getLastRow(), 40, "         ");
-    attroff(COLOR_PAIR(COLP_FREE_CELL));
-    attron(COLOR_PAIR(COLP_DATA));
-    mvprintw(getLastRow(), 40, "%dx%d %d", new_head.y, new_head.x,
-             worm->headindex);
-    attroff(COLOR_PAIR(COLP_DATA));
 
     // Check if we would leave the display if we move the worm's head according
     // to worm's last direction.
     // We are not allowed to leave the display's window.
     if (new_head.x < 0) {
         *game_state = WORM_OUT_OF_BOUNDS;
-    } else if (new_head.x > getLastCol()) {
+    } else if (new_head.x > getLastColOnBoard(board)) {
         *game_state = WORM_OUT_OF_BOUNDS;
     } else if (new_head.y < 0) {
         *game_state = WORM_OUT_OF_BOUNDS;
-    } else if (new_head.y > getLastRow()) {
+    } else if (new_head.y > getLastRowOnBoard(board)) {
         *game_state = WORM_OUT_OF_BOUNDS;
     } else {
-        // We will stay within bounds.
-        if (isInUseByWorm(worm, new_head)) {
+        switch (getContentAt(board, new_head)) {
+        case BC_FOOD_1:
+            *game_state = WORM_GAME_ONGOING;
+            // Grow worm according to food item digested
+            growWorm(worm, BONUS_1);
+            decrementNumberOfFoodItems(board);
+            break;
+        case BC_FOOD_2:
+            *game_state = WORM_GAME_ONGOING;
+            // Grow worm according to food item digested
+            growWorm(worm, BONUS_2);
+            decrementNumberOfFoodItems(board);
+            break;
+        case BC_FOOD_3:
+            *game_state = WORM_GAME_ONGOING;
+            // Grow worm according to food item digested
+            growWorm(worm, BONUS_3);
+            decrementNumberOfFoodItems(board);
+            break;
+        case BC_BARRIER:
+            // That's bad: stop game
+            *game_state = WORM_CRASH;
+            break;
+        case BC_USED_BY_WORM:
             // That's bad: stop game
             *game_state = WORM_CROSSING;
+            break;
+        default:;
         }
     }
-    // Check the status of *agame_state
+    // Check the status of *game_state
     // Go on if nothing bad happened
     if (*game_state == WORM_GAME_ONGOING) {
         // So all is well: we did not hit anything bad and did not leave the
         // window. --> Update the worm structure.
-        // Increment theworm_headindex
+        // Increment headindex
         // Go round if end of worm is reached (ring buffer)
-        worm->headindex = (worm->headindex + 1) % worm->maxindex;
+        worm->headindex++;
+        if (worm->headindex > worm->cur_lastindex) {
+            worm->headindex = 0;
+        }
         // Store new coordinates of head element in worm structure
         worm->wormpos[worm->headindex] = new_head;
     }
-}
-
-// A simple collision detection
-bool isInUseByWorm(const struct Worm *worm, const struct Pos new_head) {
-    // bool collision = false;
-
-    for (int i = 0; i <= worm->maxindex; i++) {
-        // if theworm_wormpos_x[i] == UNUSED_POS_ELEM theworm_wormpos_y[i] ==
-        // UNUSED_POS_ELEM is also true
-        if (worm->wormpos[i].y == UNUSED_POS_ELEM) {
-            // break;
-            return false;
-        }
-
-        if (worm->wormpos[i].x == new_head.x &&
-            worm->wormpos[i].y == new_head.y) {
-            // collision = true;
-            // break;
-            return true;
-        }
-    }
-
-    // Return what we found out.
-    // return collision;
-    return false;
 }
 
 // Setters
@@ -147,4 +154,12 @@ struct Pos getWormHeadPos(const struct Worm *worm) {
     // Structures are passed by value!
     // -> we return a copy here
     return worm->wormpos[worm->headindex];
+}
+
+void growWorm(struct Worm *worm, enum Boni growth) {
+    if (worm->cur_lastindex + growth <= worm->maxindex) {
+        worm->cur_lastindex += growth;
+    } else {
+        worm->cur_lastindex = worm->maxindex;
+    }
 }

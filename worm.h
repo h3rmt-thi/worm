@@ -1,5 +1,5 @@
-#ifndef _WORM_H
-#define _WORM_H
+#ifndef WORM_H
+#define WORM_H
 
 enum ResCodes {
     RES_OK,
@@ -7,38 +7,40 @@ enum ResCodes {
     RES_INTERNAL_ERROR,
 };
 
-
 enum ColorPairs {
-    COLP_FREE_CELL = 0,
-    COLP_DATA,
-    COLP_BARRIER,
-    COLP_USER_WORM,
+    COLP_USER_WORM = 1,
+    COLP_FREE_CELL,
+    COLP_FOOD_1,
+    COLP_FOOD_2,
+    COLP_FOOD_3,
+    COLP_BARRIER
 };
 
 // Dimensions and bounds
 #define MA_ROWS_RESERVED 4
 #define NAP_TIME 100 // Time in milliseconds to sleep between updates of display
-#define MIN_NUMBER_OF_ROWS 3 // The guaranteed number of rows available for the board
-#define MIN_NUMBER_OF_COLS 60 // The guaranteed number of columns available for the board
-#define WORM_LENGTH 30 // Maximal length of the worm
-
-// Numbers for color pairs used by curses macro COLOR_PAIR
-// #define COLP_USER_WORM 1
+#define MIN_NUMBER_OF_ROWS                                                     \
+    30 // The guaranteed number of rows available for the board
+#define MIN_NUMBER_OF_COLS                                                     \
+    60 // The guaranteed number of columns available for the board
 
 // Symbols to display
-#define SYMBOL_WORM_INNER_ELEMENT '0'
-#define SYMBOL_BARRIER '#'
-#define SYMBOL_FREE_CELL ' '
+#define SYMBOL_FREE_CELL " "
+#define SYMBOL_BARRIER "#"
+#define SYMBOL_FOOD_1 "2"
+#define SYMBOL_FOOD_2 "4"
+#define SYMBOL_FOOD_3 "ඞ"
+#define SYMBOL_WORM_HEAD_ELEMENT "0"
+#define SYMBOL_WORM_INNER_ELEMENT "o"
+#define SYMBOL_WORM_TAIL_ELEMENT "`"
 
-// ### Codes for the array of positions ###
-// Unused element in the worm arrays of positions
-#define UNUSED_POS_ELEM -1
-
+// Game state codes
 enum GameStates {
     WORM_GAME_ONGOING,
-    WORM_OUT_OF_BOUNDS,
-    WORM_CROSSING, // Worm head crossed another worm element
-    WORM_GAME_QUIT,
+    WORM_CRASH,         // Crashed into a barrier
+    WORM_OUT_OF_BOUNDS, // Left screen
+    WORM_CROSSING,      // Worm head crossed another worm element
+    WORM_GAME_QUIT,     // User likes to quit
 };
 
-#endif // #define _WORM_H
+#endif // #define WORM_H

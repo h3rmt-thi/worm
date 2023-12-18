@@ -28,16 +28,16 @@ MACHINE := $(shell uname -m)
 $(info $$MACHINE is $(MACHINE))
 ifeq ($(MACHINE), i686)
   CFLAGS = -g -Wall
-  LDLIBS = -lncurses
+  LDLIBS = -lncursesw
 else ifeq ($(MACHINE), armv7l)
   CFLAGS = -g -Wall
-  LDLIBS = -lncurses
+  LDLIBS = -lncursesw
 else ifeq ($(MACHINE), arm64)
   CFLAGS = -g -Wall
-  LDLIBS = -lncurses
+  LDLIBS = -lncursesw
 else ifeq ($(MACHINE), x86_64)
   CFLAGS = -g -Wall
-  LDLIBS = -lncurses
+  LDLIBS = -lncursesw
 endif
 
 #### Fixed variable definitions
