@@ -5,4 +5,4 @@
 void initializeCursesApplication();
 void cleanupCursesApp();
 
-#endif  // #define _PREP_H
+#endif // #define _PREP_H

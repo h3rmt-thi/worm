@@ -1,32 +1,27 @@
 ############################################################
-# General purpose makefile
+#General purpose makefile
 #
-# Works for all C-projects where
-# - binaries are compiled into sub-dir bin
-# - binaries are created from a multiple c-sources
-#   and depend on all headers and object files in ./
+#Works for all C - projects where
+#- binaries are compiled into sub - dir bin
+#- binaries are created from a multiple c - sources
+#and depend on all headers and object files in./
 #
-# Note: due to the dependencies encoded multiple targets
-#       are not sensible
+#Note : due to the dependencies encoded multiple targets
+#are not sensible
 #
 
-# Please add all header files in ./ here
-HEADERS += prep.h
-HEADERS += worm.h
-HEADERS += worm_model.h
-HEADERS += board_model.h
+#Please add all header files in./ here
+FILES += prep
+FILES += worm
+FILES += worm_model
+FILES += messages
+FILES += board_model
 
-# Please add all object files in ./ here
-OBJECTS += prep.o
-OBJECTS += worm.o
-OBJECTS += worm_model.o
-OBJECTS += board_model.o
-
-# Please add THE target in ./bin here
+#Please add THE target in./ bin here
 TARGET += $(BIN_DIR)/worm
  
 #################################################
-# There is no need to edit below this line
+#There is no need to edit below this line
 #################################################
 
 MACHINE := $(shell uname -m)
@@ -51,23 +46,28 @@ RM_DIR = rm -rf
 MKDIR = mkdir
 SHELL = /bin/bash
 BIN_DIR = bin
+OBJ_DIR = out
+
+OBJECTS=$(patsubst %, $(OBJ_DIR)/%.o, $(FILES))
 
 #### Default target
 all: $(BIN_DIR) $(TARGET)
 
 #### Fixed build rules for binaries with multiple object files
 
-# Object files
-%.o : %.c $(HEADERS)
-	$(CC) -c $(CFLAGS) $< 
+$(OBJ_DIR)/%.o: %.c
+	$(CC) -c $(CFLAGS) -o $@ $<
 
 #### Binaries
-$(TARGET) : $(OBJECTS)
+$(TARGET) : $(OBJ_DIR) $(OBJECTS)
 	$(CC) $(CFLAGS) -o $@ $(OBJECTS) $(LDLIBS)
 
 $(BIN_DIR):
 	$(MKDIR) $(BIN_DIR)
 
+$(OBJ_DIR):
+	$(MKDIR) $(OBJ_DIR)
+
 .PHONY: clean
 clean :
-	$(RM_DIR) $(BIN_DIR) $(OBJECTS)
+	$(RM_DIR) $(BIN_DIR) $(OBJ_DIR)
