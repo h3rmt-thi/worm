@@ -1,12 +1,9 @@
 #include <curses.h>
 #include <stdbool.h>
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <time.h>
-#include <unistd.h>
 
 #include "board_model.h"
+#include "messages.h"
 #include "prep.h"
 #include "worm.h"
 #include "worm_model.h"
@@ -22,11 +19,12 @@ void initializeColors() {
     // Define colors of the game
     start_color();
     init_pair(COLP_FREE_CELL, COLOR_BLACK, COLOR_BLACK);
-    init_pair(COLP_DATA, COLOR_RED, COLOR_CYAN);
+    init_pair(COLP_DATA, COLOR_RED, COLOR_BLACK);
+    init_pair(COLP_BARRIER, COLOR_RED, COLOR_CYAN);
     init_pair(COLP_USER_WORM, COLOR_GREEN, COLOR_BLACK);
 }
 
-void readUserInput(enum GameStates *agame_state) {
+void readUserInput(struct Worm *worm, enum GameStates *agame_state) {
     int ch; // For storing the key codes
 
     if ((ch = getch()) > 0) {
@@ -37,16 +35,16 @@ void readUserInput(enum GameStates *agame_state) {
             *agame_state = WORM_GAME_QUIT;
             break;
         case KEY_UP: // User wants up
-            setWormHeading(WORM_UP);
+            setWormHeading(worm, WORM_UP);
             break;
         case KEY_DOWN: // User wants down
-            setWormHeading(WORM_DOWN);
+            setWormHeading(worm, WORM_DOWN);
             break;
         case KEY_LEFT: // User wants left
-            setWormHeading(WORM_LEFT);
+            setWormHeading(worm, WORM_LEFT);
             break;
         case KEY_RIGHT: // User wants right
-            setWormHeading(WORM_RIGHT);
+            setWormHeading(worm, WORM_RIGHT);
             break;
         case 's': // User wants single step
             nodelay(stdscr, FALSE);
@@ -54,70 +52,60 @@ void readUserInput(enum GameStates *agame_state) {
         case ' ': // Terminate single step; make getch non-blocking again
             nodelay(stdscr, TRUE);
             break;
+        default:;
         }
     }
-    return;
 }
 
 enum ResCodes doLevel() {
-    enum GameStates game_state; // The current game_state
-
-    enum ResCodes res_code; // Result code from functions
-    bool end_level_loop;    // Indicates whether we should leave the main loop
-
-    int bottomLeft_y, bottomLeft_x; // Start positions of the worm
-
-    // At the beginnung of the level, we still have a chance to win
-    game_state = WORM_GAME_ONGOING;
+    struct Worm userworm;
+    enum GameStates game_state = WORM_GAME_ONGOING; // The current game_state
 
     // There is always an initialized user worm.
     // Initialize the userworm with its size, position, heading.
-    bottomLeft_y = getLastRow();
-    bottomLeft_x = 0;
+    const struct Pos start = {getLastRow(), 0};
 
-    res_code = initializeWorm(bottomLeft_y, bottomLeft_x, WORM_RIGHT,
-                              COLP_USER_WORM, WORM_LENGTH);
+    enum ResCodes res_code = initializeWorm(&userworm, start, WORM_RIGHT,
+                                            COLP_USER_WORM, WORM_LENGTH);
     if (res_code != RES_OK) {
         return res_code;
     }
 
-    // Show worm at its initial position
-    showWorm(false);
+    showBorderLine();
+    showWorm(&userworm, false);
 
     // Display all what we have set up until now
     refresh();
 
     // Start the loop for this level
-    end_level_loop = false; // Flag for controlling the main loop
+    bool end_level_loop = false; // Flag for controlling the main loop
     while (!end_level_loop) {
         // Process optional user input
-        readUserInput(&game_state);
+        readUserInput(&userworm, &game_state);
         if (game_state == WORM_GAME_QUIT) {
             end_level_loop = true;
-            continue; // Go to beginning of the loop's block and check loop
-                      // condition
+            continue;
         }
 
         // Process userworm
         // Clean the tail of the worm
-        cleanWormTail();
+        cleanWormTail(&userworm);
         // Now move the worm for one step
-        moveWorm(&game_state);
+        moveWorm(&userworm, &game_state);
         // Show the worm at its new position
-        showWorm(false);
+        showWorm(&userworm, false);
         // END process userworm
 
         // Bail out of the loop if something bad happened
         if (game_state != WORM_GAME_ONGOING) {
+            end_level_loop = true;
             // placeItem(theworm_wormpos_y[theworm_headindex],
             // theworm_wormpos_x[theworm_headindex], SYMBOL_WORM_INNER_ELEMENT,
             // COLP_DATA);
-            showWorm(true);
+            showWorm(&userworm, true);
             refresh();
-            end_level_loop = true;
             napms(NAP_TIME * 10);
-            continue; // Go to beginning of the loop's block and check loop
-                      // condition
+            continue;
         }
 
         // Sleep a bit before we show the updated window
@@ -131,6 +119,28 @@ enum ResCodes doLevel() {
 
     // Preset res_code for rest of the function
     res_code = RES_OK;
+
+    switch (game_state) {
+    case WORM_GAME_QUIT:
+        // User must have typed 'q' for quit
+        showDialog("Sie haben die aktuelle Runde abgebrochen!",
+                   "Bitte Taste druecken");
+        break;
+    case WORM_OUT_OF_BOUNDS:
+        showDialog("Sie haben das Spiel verloren,"
+                   " weil Sie das Spielfeld verlassen haben",
+                   "Bitte Taste druecken");
+        break;
+    case WORM_CROSSING:
+        showDialog("Sie haben das Spiel verloren,"
+                   " weil Sie einen Wurm gekreuzt haben",
+                   "Bitte Taste druecken");
+        break;
+    default:
+        showDialog("Interner Fehler!", "Bitte Taste druecken");
+        // Set error result code. This should never happen.
+        res_code = RES_INTERNAL_ERROR;
+    }
 
     // For some reason we left the control loop of the current level.
     // However, in this version we do not yet check for the reason.
@@ -152,7 +162,7 @@ int main(void) {
 
     // Check if the window is large enough to display messages in the message
     // area a has space for at least one line for the worm
-    if (LINES < MIN_NUMBER_OF_ROWS || COLS < MIN_NUMBER_OF_COLS) {
+    if (LINES < MA_ROWS_RESERVED + MIN_NUMBER_OF_ROWS || COLS < MIN_NUMBER_OF_COLS) {
         // Since we not even have the space for displaying messages
         // we print a conventional error message via printf after
         // the call of cleanupCursesApp()

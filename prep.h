@@ -2,7 +2,7 @@
 #define _PREP_H
 
 // Standard curses initialization and cleanup
-extern void initializeCursesApplication();
-extern void cleanupCursesApp();
+void initializeCursesApplication();
+void cleanupCursesApp();
 
 #endif // #define _PREP_H

@@ -4,27 +4,30 @@
 enum ResCodes {
     RES_OK,
     RES_FAILED,
+    RES_INTERNAL_ERROR,
 };
+
 
 enum ColorPairs {
     COLP_FREE_CELL = 0,
     COLP_DATA,
+    COLP_BARRIER,
     COLP_USER_WORM,
 };
 
 // Dimensions and bounds
+#define MA_ROWS_RESERVED 4
 #define NAP_TIME 100 // Time in milliseconds to sleep between updates of display
-#define MIN_NUMBER_OF_ROWS                                                     \
-    3 // The guaranteed number of rows available for the board
-#define MIN_NUMBER_OF_COLS                                                     \
-    10 // The guaranteed number of columns available for the board
+#define MIN_NUMBER_OF_ROWS 3 // The guaranteed number of rows available for the board
+#define MIN_NUMBER_OF_COLS 60 // The guaranteed number of columns available for the board
 #define WORM_LENGTH 30 // Maximal length of the worm
 
 // Numbers for color pairs used by curses macro COLOR_PAIR
-//#define COLP_USER_WORM 1
+// #define COLP_USER_WORM 1
 
 // Symbols to display
 #define SYMBOL_WORM_INNER_ELEMENT '0'
+#define SYMBOL_BARRIER '#'
 #define SYMBOL_FREE_CELL ' '
 
 // ### Codes for the array of positions ###
