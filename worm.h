@@ -27,8 +27,8 @@ enum ColorPairs {
 // Symbols to display
 #define SYMBOL_FREE_CELL " "
 #define SYMBOL_BARRIER "#"
-#define SYMBOL_FOOD_1 "2"
-#define SYMBOL_FOOD_2 "4"
+#define SYMBOL_FOOD_1 "🍟"
+#define SYMBOL_FOOD_2 "🍔"
 #define SYMBOL_FOOD_3 "ඞ"
 #define SYMBOL_WORM_HEAD_ELEMENT "0"
 #define SYMBOL_WORM_INNER_ELEMENT "o"
