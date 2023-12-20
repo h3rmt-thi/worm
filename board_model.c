@@ -92,7 +92,7 @@ enum ResCodes initializeLevel(struct Board *board) {
     placeItem(board, 19, 9, BC_FOOD_1, SYMBOL_FOOD_2, COLP_FOOD_2);
     placeItem(board, 17, 16, BC_FOOD_1, SYMBOL_FOOD_3, COLP_FOOD_3);
     placeItem(board, 22, 33, BC_FOOD_1, SYMBOL_FOOD_3, COLP_FOOD_3);
-    placeItem(board, 15, 37, BC_FOOD_1, SYMBOL_FOOD_3, COLP_FOOD_3);
+    placeItem(board, 15, 36, BC_FOOD_1, SYMBOL_FOOD_3, COLP_FOOD_3);
     placeItem(board, 7, 56, BC_FOOD_1, SYMBOL_FOOD_3, COLP_FOOD_3);
 
     // Initialize number of food items

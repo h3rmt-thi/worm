@@ -51,6 +51,8 @@ int showDialog(char *prompt1, char *prompt2) {
     }
     refresh();
 
+	napms(1000);	
+
     nodelay(stdscr, FALSE);
     const int ch = getch(); // Wait for user to press an arbitrary key
     nodelay(stdscr, TRUE);
